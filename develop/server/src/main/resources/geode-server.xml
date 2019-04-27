@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:gfe="http://www.springframework.org/schema/geode"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/geode http://www.springframework.org/schema/geode/spring-geode.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="org.learn.geode.server"/>
+    <task:annotation-driven/>
+    <util:properties id="gemfireProperties">
+        <prop key="locators">localhost[10334]</prop>
+    </util:properties>
+
+    <gfe:pool id="gemfire-pool" subscription-enabled="true">
+        <gfe:locator host="localhost" port="10334"/>
+    </gfe:pool>
+
+    <bean id="pdxSerializer" class="org.apache.geode.pdx.ReflectionBasedAutoSerializer">
+        <constructor-arg value="org.learn.geode.server.domain.*, org.learn.geode.common.dto.*"/>
+    </bean>
+
+    <gfe:cache
+      close="false"
+      copy-on-read="true"
+      critical-heap-percentage="70"
+      eviction-heap-percentage="60"
+      enable-auto-reconnect="true"
+      lock-lease="120"
+      lock-timeout="60"
+      message-sync-interval="1"
+      pdx-serializer-ref="pdxSerializer"
+      pdx-persistent="true"
+      pdx-read-serialized="false"
+      pdx-ignore-unread-fields="true"
+      properties-ref="gemfireProperties"
+       />
+
+    <!-- GemFire transaction manager -->
+    <gfe:transaction-manager/>
+
+    <gfe:cache-server id="advanced-config" auto-startup="true"
+                      bind-address="localhost" host-name-for-clients="localhost" port="40404"
+                      load-poll-interval="2000" max-connections="22" max-message-count="100000"
+                      max-threads="32" max-time-between-pings="30000"
+                      groups="eig-server" >
+        <gfe:subscription-config  eviction-type="ENTRY" capacity="100000"/>
+    </gfe:cache-server>
+
+    <gfe:replicated-region id="connected_system">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="connectedSystem"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="connectedSystem"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+    
+    <gfe:replicated-region id="incoming_msg">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="incomingMsg"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="incomingMsg"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+    
+    <gfe:replicated-region id="out_msg">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="outMsg"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="outMsg"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+    
+    <gfe:replicated-region id="splitted_msg">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="splittedMsg"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="splittedMsg"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+    
+    <gfe:replicated-region id="splitted_attribute">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="splittedAttribute"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="splittedAttribute"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+    
+    <gfe:replicated-region id="split_out_xref">
+        <gfe:cache-loader>
+            <bean class="org.learn.geode.server.cache.GeodeCacheLoader">
+            	<constructor-arg value="splitOutXref"/>
+            </bean>
+        </gfe:cache-loader>
+        <gfe:cache-writer>
+            <bean class="org.learn.geode.server.cache.GeodeCacheWriter">
+            	<constructor-arg value="splitOutXref"/>
+            </bean>
+        </gfe:cache-writer>
+    </gfe:replicated-region>
+
+	<gfe:replicated-region id="system_attribute"/>
+	
+    <bean class="org.learn.geode.server.domain.loader.GeodeDataLoader"/>
+    
+</beans>
